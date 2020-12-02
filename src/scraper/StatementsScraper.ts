@@ -118,7 +118,7 @@ const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep
     const problemsUrl = await Promise.all(enterGroup.map(async (a) => {
         return await (await a.getProperty('href')).jsonValue() + '/problems';
     }));
-    
+
     console.log('No. of contests :', problemsUrl.length);
 
     const contests = [];
@@ -137,18 +137,26 @@ const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep
 
         let subRequest = problemsUrl.slice(startIdx, endIdx);
 
+        const parseContestBody = async (req, problemsBody) => {
+
+            await Promise.all(problemsBody.map(async (bodyElement) => {
+
+                const body = await cfPage.evaluate(el => el.innerHTML, bodyElement);
+                contests.push({ 'url': req._url, 'body': body });
+
+            }));
+        };
+       
+        const parseBody = async (req) => {
+
+            await cfPage.$x('//div[@class="problem-statement"]').then(parseContestBody.bind(null, req));
+
+        };
+
         const parseSupRequest = async (url) => {
 
-            await cfPage.goto(url, { waitUntil: 'load', timeout: timeout });
+            await cfPage.goto(url, { waitUntil: 'load', timeout: timeout }).then(parseBody.bind(null));
 
-            await cfPage.$x('//div[@class="problem-statement"]').then(async (problemsBody) => {
-
-                for (let j = 0; j < problemsBody.length; j++) {
-
-                    const body = await cfPage.evaluate(el => el.innerHTML, problemsBody[j]);
-                    contests.push({'url': url, 'body': body});
-                }
-            });
         };
 
         await Promise.all(subRequest.map(parseSupRequest));
@@ -157,6 +165,7 @@ const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep
     }
 
     console.log('No. of cf-problems : ', contests.length);
+    console.log(contests[0]);
 
     const parseProblemBody = async (body) => {
 
@@ -204,9 +213,9 @@ const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep
 
         const problem = await parseProblemBody(contests[i]['body']);
 
-        problems.push({'url': contests[i]['url'], 'problem': problem});
+        problems.push({ 'url': contests[i]['url'], 'problem': problem });
     }
-    
+
     return problems;
 }
 

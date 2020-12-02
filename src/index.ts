@@ -31,7 +31,7 @@ const getCfStatements = () => {
         // codeforces
         const cfPage = await cfLogin(browser, 0);
 
-        const numOfParallelContests = 7;
+        const numOfParallelContests = 5;
         const cfProblems = await cfParseStatements(cfPage, numOfParallelContests, 0, ' ');
         
         delay(100);
@@ -88,7 +88,7 @@ const statementsSimilarity = (cfProblems, polygonProblem) => {
 
         const s = computeSimilarity(cfProblems[i]['problem'], polygonProblem);
 
-        similarity.push([s, cfProblems[i]['problem']['header']]);
+        similarity.push([s, cfProblems[i]['problem']['header'], cfProblems[i]['url']]);
     }
 
     return similarity;
