@@ -1,4 +1,7 @@
 import puppeteer from 'puppeteer';
+import xtree from "xpath";
+import { DOMParser } from "xmldom";
+import { url } from 'inspector';
 
 // login url
 const polyLoginUrl = 'https://polygon.codeforces.com/login';
@@ -20,7 +23,7 @@ const delay = (time) => {
 
 const strFormat = (str: string) => {
 
-    return str.replace(/\n[0-9]|/g, '').replace(/\n/g, ' ');
+    return str.replace(/\n[0-9]|/g, '').replace(/\n/g, ' ').replace(/\s\s+/g, ' ').replace('$', '');
 };
 
 const run = async (headless: boolean = false) => {
@@ -104,8 +107,7 @@ const cfLogin = async (browser, timeout = 0) => {
     return cfPage;
 }
 
-
-const cfParseStatements = async (cfPage, timeout = 0, sep = ' ') => {
+const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep = ' ') => {
 
     const problemsettingUrl = `http://codeforces.com/contests/writer/${process.env.CF_USERNAME}`
 
@@ -116,43 +118,79 @@ const cfParseStatements = async (cfPage, timeout = 0, sep = ' ') => {
     const problemsUrl = await Promise.all(enterGroup.map(async (a) => {
         return await (await a.getProperty('href')).jsonValue() + '/problems';
     }));
+    
+    console.log('No. of contests :', problemsUrl.length);
 
-    const contestsProblem = await Promise.all(problemsUrl.map(async (url) => {
+    const contests = [];
 
-        await cfPage.goto(url, { waitUntil: 'load', timeout: timeout });
-        const problemsBody = (await cfPage.$x('//div[@class="problem-statement"]'));
+    const inParallel = Math.floor(problemsUrl.length / numOfParallelContests);
 
-        return problemsBody;
-    }));
+    console.log(inParallel);
+
+    for (let i = 0; i < inParallel; i++) {
+
+        const startIdx = i * numOfParallelContests;
+        let endIdx = (i + 1) * numOfParallelContests;
+
+        endIdx = Math.min(endIdx, problemsUrl.length);
 
 
+        let subRequest = problemsUrl.slice(startIdx, endIdx);
 
+        const parseSupRequest = async (url) => {
+
+            await cfPage.goto(url, { waitUntil: 'load', timeout: timeout });
+
+            await cfPage.$x('//div[@class="problem-statement"]').then(async (problemsBody) => {
+
+                for (let j = 0; j < problemsBody.length; j++) {
+
+                    const body = await cfPage.evaluate(el => el.innerHTML, problemsBody[j]);
+                    contests.push({'url': url, 'body': body});
+                }
+            });
+        };
+
+        await Promise.all(subRequest.map(parseSupRequest));
+
+        console.log(i);
+    }
+
+    console.log('No. of cf-problems : ', contests.length);
 
     const parseProblemBody = async (body) => {
 
+        const doc = new DOMParser({
+            locator: {},
+            errorHandler: {
+                warning: function (warn) { },
+                error: function (err) { },
+                fatalError: function (err) { console.error(err); }
+            }
+        }).parseFromString(body, 'text/xml');
+
         const classes = ['header', 'input-specification', 'output-specification', 'sample-tests', 'note'];
+
         const problem = {};
+
 
         for (let i = 0; i < classes.length; i++) {
 
-            const xpath = `div[@class="${classes[i]}"]`;
-            const specNode = await body.$x(xpath);
-            let text = ''
+            const spNodes = xtree.select(`//div[@class="${classes[i]}"]/child::*/text()`, doc);
+            let text = '';
 
-            for (let j = 0; j < specNode.length; j++) {
-                let val = await cfPage.evaluate(el => el.innerText, specNode[j]);
-                text += val + sep;
+            for (let j = 0; j < spNodes.length; j++) {
+                text += spNodes[j].toString() + sep;
             }
 
             problem[classes[i].replace('-', '_')] = strFormat(text);
         }
 
-        const pNode = await body.$x('div[not(@class)]/child::*');
+        const pNodes = xtree.select(`div[not(@class)]/child::*/text()`, doc);
         let text = '';
 
-        for (let i = 0; i < pNode.length; i++) {
-            let val = await cfPage.evaluate(el => el.innerText, pNode[i]);
-            text += val + sep;
+        for (let i = 0; i < pNodes.length; i++) {
+            text += pNodes[i].toString() + sep;
         }
 
         problem['statement'] = strFormat(text);
@@ -160,23 +198,21 @@ const cfParseStatements = async (cfPage, timeout = 0, sep = ' ') => {
         return problem;
     };
 
-    const problems = [];
+    let problems = [];
 
-    for (let i = 0; i < contestsProblem.length; i++) {
-        for (let j = 0; j < contestsProblem[i].length; j++) {
+    for (let i = 0; i < contests.length; i++) {
 
-            const problem = await parseProblemBody(contestsProblem[i][j]);
+        const problem = await parseProblemBody(contests[i]['body']);
 
-            problems.push(problem);
-        }
+        problems.push({'url': contests[i]['url'], 'problem': problem});
     }
-
+    
     return problems;
 }
 
-const polygonParseStatement = async (polyPage, id, timeout = 0, sep = ' ') => {
+const polygonParseStatement = async (polyPage, page, id, timeout = 0, sep = ' ') => {
 
-    const mainUrl = 'https://polygon.codeforces.com/problems';
+    const mainUrl = `https://polygon.codeforces.com/problems?page=${page}`;
 
     await polyPage.goto(mainUrl, { waitUntil: 'load', timeout: timeout });
 
