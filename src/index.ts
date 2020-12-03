@@ -31,8 +31,10 @@ const getCfStatements = () => {
         // codeforces
         const cfPage = await cfLogin(browser, 0);
 
-        const numOfParallelContests = 5;
-        const cfProblems = await cfParseStatements(cfPage, numOfParallelContests, 0, ' ');
+        const numOfParallelContests = 10;
+        const waitingStep = 50;
+        const waitingTime = 3000;
+        const cfProblems = await cfParseStatements(browser, cfPage, numOfParallelContests, waitingStep, waitingTime, 0, ' ');
         
         delay(100);
 
@@ -51,7 +53,7 @@ const getCfStatements = () => {
 
         similarity.forEach((s, ele) => {
 
-            if (s > 0.6) {
+            if (s > 0.8) {
                 console.log(s, ele);
             }
         });

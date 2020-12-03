@@ -23,7 +23,7 @@ const delay = (time) => {
 
 const strFormat = (str: string) => {
 
-    return str.replace(/\n[0-9]|/g, '').replace(/\n/g, ' ').replace(/\s\s+/g, ' ').replace('$', '');
+    return str.replace(/[^a-zA-Z ^0-9]/g, ' ').replace(/\s\s+/g, ' ').toLowerCase();
 };
 
 const run = async (headless: boolean = false) => {
@@ -35,7 +35,7 @@ const run = async (headless: boolean = false) => {
 
 const polyLogin = async (browser, timeout = 0) => {
 
-    const polyPage = await browser.newPage();
+    const polyPage = (await browser.pages())[0];
 
     await polyPage.goto(polyLoginUrl, { waitUntil: 'load', timeout: timeout });
 
@@ -69,7 +69,7 @@ const polyLogin = async (browser, timeout = 0) => {
         await send_anyway.click();
     }
 
-    await polyPage.waitForNavigation({ waitUntil: 'networkidle0' });
+    await polyPage.waitForNavigation({ waitUntil: 'networkidle0', timeout: timeout });
 
     return polyPage;
 }
@@ -107,7 +107,8 @@ const cfLogin = async (browser, timeout = 0) => {
     return cfPage;
 }
 
-const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep = ' ') => {
+const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, waitingStep = 500,
+    watingTime = 3000, timeout = 0, sep = ' ') => {
 
     const problemsettingUrl = `http://codeforces.com/contests/writer/${process.env.CF_USERNAME}`
 
@@ -123,49 +124,73 @@ const cfParseStatements = async (cfPage, numOfParallelContests, timeout = 0, sep
 
     const contests = [];
 
-    const inParallel = Math.floor(problemsUrl.length / numOfParallelContests);
-
-    console.log(inParallel);
-
-    for (let i = 0; i < inParallel; i++) {
-
-        const startIdx = i * numOfParallelContests;
-        let endIdx = (i + 1) * numOfParallelContests;
-
-        endIdx = Math.min(endIdx, problemsUrl.length);
+    // dublicatePages
+    const dublicatePage = Array(numOfParallelContests);
+    const idlePageMask = Array(numOfParallelContests).fill(false);
 
 
-        let subRequest = problemsUrl.slice(startIdx, endIdx);
+    dublicatePage[0] = (await browser.pages())[0];
 
-        const parseContestBody = async (req, problemsBody) => {
+    for (let i = 1; i < numOfParallelContests; i++) {
 
-            await Promise.all(problemsBody.map(async (bodyElement) => {
+        dublicatePage[i] = await browser.newPage();
+        delay(100);
+    }
 
-                const body = await cfPage.evaluate(el => el.innerHTML, bodyElement);
-                contests.push({ 'url': req._url, 'body': body });
+    // ith contest
+    let i = 0;
 
-            }));
-        };
-       
-        const parseBody = async (req) => {
+    const parseContestBody = async (req, jth, problemsBody) => {
 
-            await cfPage.$x('//div[@class="problem-statement"]').then(parseContestBody.bind(null, req));
+        await Promise.all(problemsBody.map(async (bodyElement) => {
 
-        };
+            const body = await dublicatePage[jth].evaluate(el => el.innerHTML, bodyElement);
+            contests.push({ 'url': req._url, 'body': body });
 
-        const parseSupRequest = async (url) => {
+        })).then(() => {
 
-            await cfPage.goto(url, { waitUntil: 'load', timeout: timeout }).then(parseBody.bind(null));
+            if (i > 5) {
+                idlePageMask[jth] = false;
+            }
+        });
+    };
 
-        };
+    const parseBody = async (jth, req) => {
 
-        await Promise.all(subRequest.map(parseSupRequest));
+
+        await dublicatePage[jth].$x('//div[@class="problem-statement"]').then(parseContestBody.bind(null, req, jth));
+
+    };
+
+    const parseRequest = async (url, jth) => {
+
+        idlePageMask[jth] = true;
+        i += 1;
+
+        await dublicatePage[jth].goto(url, { waitUntil: 'load', timeout: timeout }).then(parseBody.bind(null, jth));
+
+    };
+
+    const onIdle = async (state, j) => {
+
+        if (state == false)
+            await parseRequest(problemsUrl[i], j);
+    };
+
+
+
+    while (i < problemsUrl.length) {
+
+        await Promise.all(idlePageMask.map(onIdle));
+
+        if (i > 0 && i % waitingStep === 0)
+
+            delay(watingTime);
 
         console.log(i);
     }
 
     console.log('No. of cf-problems : ', contests.length);
-    console.log(contests[0]);
 
     const parseProblemBody = async (body) => {
 
