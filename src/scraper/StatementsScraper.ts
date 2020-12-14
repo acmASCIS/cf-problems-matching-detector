@@ -149,14 +149,12 @@ const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, wai
 
         })).then(() => {
 
-            if (i > 5) {
-                idlePageMask[jth] = false;
-            }
+            idlePageMask[jth] = false;
         });
     };
 
     const parseBody = async (jth, req) => {
-
+ 
 
         await dublicatePage[jth].$x('//div[@class="problem-statement"]').then(parseContestBody.bind(null, req, jth));
 
@@ -173,7 +171,7 @@ const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, wai
 
     const onIdle = async (state, j) => {
 
-        if (state == false)
+        if (state === false && i < problemsUrl.length)
             await parseRequest(problemsUrl[i], j);
     };
 
@@ -239,6 +237,11 @@ const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, wai
         const problem = await parseProblemBody(contests[i]['body']);
 
         problems.push({ 'url': contests[i]['url'], 'problem': problem });
+    }
+
+    for (let i = 1; i < numOfParallelContests; i++) {
+
+        await dublicatePage[i].close();
     }
 
     return problems;

@@ -25,15 +25,15 @@ const cache_info = (data) => {
     });
 };
 
-const getCfStatements = () => {
-    run().then(async (browser) => {
+const getCfStatements = (headless = false) => {
+    run(headless).then(async (browser) => {
 
         // codeforces
         const cfPage = await cfLogin(browser, 0);
 
         const numOfParallelContests = 10;
-        const waitingStep = 50;
-        const waitingTime = 3000;
+        const waitingStep = 100;
+        const waitingTime = 100;
         const cfProblems = await cfParseStatements(browser, cfPage, numOfParallelContests, waitingStep, waitingTime, 0, ' ');
         
         delay(100);
@@ -45,8 +45,6 @@ const getCfStatements = () => {
         const page = 2;
         const id = '104501';
         const polygonProblem = await polygonParseStatement(polyPage, page, id, 0, ' ');
-
-        console.log(polygonProblem);
 
         const similarity = statementsSimilarity(cfProblems, polygonProblem);
 
@@ -60,7 +58,7 @@ const getCfStatements = () => {
         
         const maxSimilarity = getMaxSimilarity(similarity);
 
-        console.log('===========\n');
+        console.log('has-max-similarity : \n===========\n');
         console.log(maxSimilarity);
 
         cache_info(similarity); // cache output
@@ -111,6 +109,6 @@ const getMaxSimilarity = (similarity)=>{
     return mx;
 };
 
-getCfStatements();
+getCfStatements(false);
 
 export { getCfStatements, polygonParseStatement, statementsSimilarity };
