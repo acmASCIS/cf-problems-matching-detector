@@ -29,14 +29,14 @@ app.use(cors());
 app.use(morgan('dev', { stream: logFile }));
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-app.post('/api/cf-problems-matching', async (req, res) => {
+app.post('/api/cf-problems-matching',  (req, res) => {
     
     const { numOfPolygonPages, matchingPercentageThreshold } = req.body;
 
     const problemsScraper = new Scraper(headless, numOfPolygonPages, matchingPercentageThreshold);
 
     const delayed = new DelayedResponse(req, res);
-
+    
     delayed.wait();
 
     delayed.end((async () => {

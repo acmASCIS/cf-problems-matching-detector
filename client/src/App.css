@@ -115,3 +115,8 @@ body {
   border-radius: 10px;
   transform: scale(1.1);
 } 
+
+.submit:disabled{
+  border: 1px solid #c0bfc8;
+  background-color: #c0bfc8;
+}

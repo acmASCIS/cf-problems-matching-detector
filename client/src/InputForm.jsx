@@ -50,7 +50,11 @@ function InputForm({ onSubmit, isLoading }) {
                 />
             </div>
             <button type="submit" className="submit form-entry" disabled={isLoading}>
-
+                {isLoading && (
+                    <div class="spinner-border spinner-grow-sm mr-1" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                )}
                 Submit
 
             </button>

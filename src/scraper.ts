@@ -7,7 +7,7 @@ class Scraper {
     private polyPage: any | undefined = undefined;
     private browser: any | undefined = undefined;
     
-    constructor(private headless = false, public numOfPolygonPages, public matchingPercentageThreshold = undefined) { }
+    constructor(private headless = false, public numOfPolygonPages = undefined, public matchingPercentageThreshold = undefined) { }
 
     public start = async () => {
 

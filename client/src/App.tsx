@@ -1,38 +1,41 @@
 import React, { useState } from 'react';
-// import logo from './logo.svg';
 import './App.css';
 import { List } from "./List";
 import { InputForm } from "./InputForm";
 import axios from "axios";
-import {Scraper} from "../../src/scraper"
+import { Scraper } from "../../src/scraper"
+
+// 104501
 
 function App() {
 
   let problemsScraper: Scraper = undefined;
 
-  const [existeStatements, setExisteStatements] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const [ready, setReady] = useState(true);
+  const [ready, setReady] = useState(false);
 
   const onSubmit = async (data: any) => {
 
+    setIsLoading(true);
+    
     const numOfPolygonPages: number = data.numOfPolygonPages;
     const problemsId: string = data.problemsId;
     const matchingPercentageThreshold: number = data.matchingPercentageThreshold;
-
-    const url = `${process.env.REACT_APP_API_URL || 'http://localhost:3000'}/api/cf-problems-matching`;
-
+    
+    const url = `http://localhost:${process.env.REACT_APP_PORT}/api/cf-problems-matching`;
 
     if (!ready) {
-     
-      setIsLoading(true);
+
       
       try {
 
-        problemsScraper = await axios.post(url, {numOfPolygonPages, matchingPercentageThreshold}, {
+        problemsScraper = await axios.post(url, { numOfPolygonPages, matchingPercentageThreshold }, {
           timeout: 0,
         });
 
+        if (problemsScraper){
+          setReady(true);
+        }
       }
 
       catch (error) {
@@ -40,27 +43,24 @@ function App() {
         alert('An error occurred. \n' + error);
 
       }
-
-      finally {
-
-        setIsLoading(false);
-        setReady(true);
-      }
     }
 
-    else{
+    else {
       problemsScraper.matchingPercentageThreshold = matchingPercentageThreshold;
       problemsScraper.numOfPolygonPages = numOfPolygonPages;
     }
 
-    problemsScraper.matchPolygonProblems(problemsId);
-  
+    if (ready) {
+
+      await problemsScraper.matchPolygonProblems(problemsId);
+      setIsLoading(false);
+    }
+
   };
 
   return (
     <div className="App">
       <header className="header">
-        {/* <img src={logo} className="logo" alt="logo" /> */}
         <body>
           <InputForm isLoading={isLoading} onSubmit={onSubmit} />
         </body>
