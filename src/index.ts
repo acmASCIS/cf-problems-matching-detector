@@ -7,7 +7,7 @@ import cors from "cors";
 
 import { Scraper } from "./scraper";
 
-const headless = true;
+const headless = false;
 
 const fs = require('fs');
 const app = express();
@@ -29,14 +29,14 @@ app.use(cors());
 app.use(morgan('dev', { stream: logFile }));
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-app.post('/api/cf-problems-matching',  (req, res) => {
-    
+app.post('/api/cf-problems-matching', (req, res) => {
+
     const { numOfPolygonPages, matchingPercentageThreshold } = req.body;
 
     const problemsScraper = new Scraper(headless, numOfPolygonPages, matchingPercentageThreshold);
 
     const delayed = new DelayedResponse(req, res);
-    
+
     delayed.wait();
 
     delayed.end((async () => {
@@ -49,7 +49,7 @@ app.post('/api/cf-problems-matching',  (req, res) => {
 
                 await problemsScraper.start();
 
-                return problemsScraper;
+                return true;
             }
 
             catch (error) {
@@ -59,8 +59,16 @@ app.post('/api/cf-problems-matching',  (req, res) => {
             }
         }
 
-        return undefined;
-    })(),
+        return false;
+        
+    })().then((state) => {
+        if (state) {
+            res.send(problemsScraper);
+        }
+        else {
+            res.send(undefined);
+        }
+    }),
     );
 });
 

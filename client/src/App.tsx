@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { List } from "./List";
+import { ResultsTable } from "./ResultsTable";
 import { InputForm } from "./InputForm";
 import axios from "axios";
 import { Scraper } from "../../src/scraper"
@@ -11,29 +11,35 @@ function App() {
 
   let problemsScraper: Scraper = undefined;
 
+  const [results, setResults] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
   const onSubmit = async (data: any) => {
 
     setIsLoading(true);
-    
+
     const numOfPolygonPages: number = data.numOfPolygonPages;
     const problemsId: string = data.problemsId;
     const matchingPercentageThreshold: number = data.matchingPercentageThreshold;
-    
+
     const url = `http://localhost:${process.env.REACT_APP_PORT}/api/cf-problems-matching`;
 
     if (!ready) {
 
-      
+
       try {
 
-        problemsScraper = await axios.post(url, { numOfPolygonPages, matchingPercentageThreshold }, {
+        await axios.post(url, { numOfPolygonPages, matchingPercentageThreshold }, {
           timeout: 0,
+        }).then((_problemsScraper: any) => {
+          console.log(_problemsScraper);
+          problemsScraper = _problemsScraper;
         });
 
-        if (problemsScraper){
+        console.log(problemsScraper);
+
+        if (problemsScraper) {
           setReady(true);
         }
       }
@@ -41,7 +47,8 @@ function App() {
       catch (error) {
 
         alert('An error occurred. \n' + error);
-
+        setReady(false);
+        setIsLoading(false);
       }
     }
 
@@ -52,8 +59,9 @@ function App() {
 
     if (ready) {
 
-      await problemsScraper.matchPolygonProblems(problemsId);
+      const maxSimilarities = await problemsScraper.matchPolygonProblems(problemsId);
       setIsLoading(false);
+      setResults(maxSimilarities);
     }
 
   };
@@ -62,7 +70,12 @@ function App() {
     <div className="App">
       <header className="header">
         <body>
+
+        {results === undefined ? (
           <InputForm isLoading={isLoading} onSubmit={onSubmit} />
+          ) : (
+        <ResultsTable results={results} />
+      )}
         </body>
       </header>
 

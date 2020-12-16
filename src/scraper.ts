@@ -11,9 +11,11 @@ class Scraper {
 
     public start = async () => {
 
-        run(this.headless).then(async (browser) => {
-
-            this.browser = browser;
+        this.browser = await run(this.headless).catch((err) => {
+            console.log(err);
+        });
+        
+        (async () => {
 
             // codeforces
             const cfPage = await cfLogin(this.browser, 0);
@@ -28,9 +30,7 @@ class Scraper {
 
             // polygon
             this.polyPage = await polyLogin(this.browser, 0);
-        }).catch((err) => {
-            console.log(err);
-        });
+        })();
     };
 
     public matchPolygonProblems = async (problemsId) =>{
@@ -42,9 +42,11 @@ class Scraper {
         for(let i=0; i<problemIdList.length; i++){
 
             const {similarity, hasMaxSimilarity} = await this.matchPolygonProblemHandler(problemIdList[i]);
-            maxSimilarities.push([problemIdList[i], hasMaxSimilarity]);
+            maxSimilarities.push([problemIdList[i], hasMaxSimilarity[0], hasMaxSimilarity[1], hasMaxSimilarity[2]]);
         }
 
+        console.log(maxSimilarities);
+        
         return maxSimilarities;
     }
 
