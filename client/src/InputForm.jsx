@@ -1,13 +1,17 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 function InputForm({ onSubmit, isLoading }) {
 
+    const [numOfPolygonPages, setNumOfPolygonPages] = useState('');
     const [problemsId, setProblemsId] = useState('');
     const [matchingPercentageThreshold, setMatchingPercentageThreshold] = useState('');
 
     const submitHandler = (event) => {
         event.preventDefault();
-        onSubmit({ problemsId, matchingPercentageThreshold: +matchingPercentageThreshold });
+        onSubmit({
+            problemsId, numOfPolygonPages: +numOfPolygonPages,
+            matchingPercentageThreshold: +matchingPercentageThreshold
+        });
     };
 
     const createOnChangeHandler = setter => event => {
@@ -16,6 +20,16 @@ function InputForm({ onSubmit, isLoading }) {
 
     return (
         <form classname='form' onSubmit={submitHandler}>
+            <div>
+                <input
+                    className="input form-entry"
+                    id="numOfPolygonPages"
+                    placeholder="Enter Number of Polygon Pages"
+                    value={numOfPolygonPages}
+                    onChange={createOnChangeHandler(setNumOfPolygonPages)}
+                />
+            </div>
+
             <div>
                 <textarea
                     className="comma-separated-input form-entry"
@@ -36,8 +50,8 @@ function InputForm({ onSubmit, isLoading }) {
                 />
             </div>
             <button type="submit" className="submit form-entry" disabled={isLoading}>
-            
-            Submit
+
+                Submit
 
             </button>
         </form>

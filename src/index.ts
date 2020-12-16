@@ -1,106 +1,75 @@
 import dotenv from "dotenv";
-import { run, polyLogin, cfLogin, cfParseStatements, polygonParseStatement, delay } from './scraper/StatementsScraper';
-import check from 'string-similarity';
+import express from 'express';
+import path from 'path';
+import morgan from "morgan";
+import DelayedResponse from "http-delayed-response";
+import cors from "cors";
+
+import { Scraper } from "./scraper";
+
+const headless = true;
 
 const fs = require('fs');
+const app = express();
 
 dotenv.config();
 
-const cache_info = (data) => {
-    
-    let jsonData = {};
-    
-    for(let i=0; i<data.length; i++)
-    {
-        jsonData[i] = data[i];
+fs.exists('logs.log', function (exists) {
+    if (exists) {
+        fs.unlinkSync('logs.log');
     }
+});
 
-    let json = JSON.stringify(jsonData);
+const logFile = fs.createWriteStream(path.join(__dirname, 'logs.log'), {
+    flags: 'a',
+});
 
-    fs.writeFile('cf_cache.json', json, (err) => {
-        if (err) {
-            throw err;
+app.use(express.json());
+app.use(cors());
+app.use(morgan('dev', { stream: logFile }));
+app.use(express.static(path.join(__dirname, '../client/build')));
+
+app.post('/api/cf-problems-matching', async (req, res) => {
+    
+    const { numOfPolygonPages, matchingPercentageThreshold } = req.body;
+
+    const problemsScraper = new Scraper(headless, numOfPolygonPages, matchingPercentageThreshold);
+
+    const delayed = new DelayedResponse(req, res);
+
+    delayed.wait();
+
+    delayed.end((async () => {
+
+        const RETRIES = 10;
+
+        for (let i = 0; i < RETRIES; i += 1) {
+
+            try {
+
+                await problemsScraper.start();
+
+                return problemsScraper;
+            }
+
+            catch (error) {
+
+                console.log(`ATTEMPT [${i + 1}] FAILED.`);
+                console.log(error);
+            }
         }
-        console.log("cf-data is saved");
-    });
-};
 
-const getCfStatements = (headless = false) => {
-    run(headless).then(async (browser) => {
+        return undefined;
+    })(),
+    );
+});
 
-        // codeforces
-        const cfPage = await cfLogin(browser, 0);
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
-        const numOfParallelContests = 10;
-        const waitingStep = 100;
-        const waitingTime = 100;
-        const cfProblems = await cfParseStatements(browser, cfPage, numOfParallelContests, waitingStep, waitingTime, 0, ' ');
-        
-        delay(100);
+const PORT = process.env.PORT || 3000;
 
-        // polygon
-        const polyPage = await polyLogin(browser, 0);
-
-        // polygon problem id
-        const page = 2;
-        const id = '104501';
-        const polygonProblem = await polygonParseStatement(polyPage, page, id, 0, ' ');
-
-        const similarity = statementsSimilarity(cfProblems, polygonProblem);
-
-        const maxSimilarity = getMaxSimilarity(similarity);
-
-        console.log('has-max-similarity : \n===========\n');
-        console.log(maxSimilarity);
-
-        cache_info(similarity); // cache output
-
-        // close
-        browser.close();
-
-
-    }).catch((err) => {
-        console.log(err);
-    });
-};
-
-// cfProblems: Array, polygonProblem: dict
-const statementsSimilarity = (cfProblems, polygonProblem) => {
-
-    const similarity = [];
-
-    const computeSimilarity = (a, b) => {
-
-        const s = check.compareTwoStrings(a['statement'], b['statement']);
-
-        return s;
-    };
-    
-    for (let i = 0; i < cfProblems.length; i++) {
-
-        const s = computeSimilarity(cfProblems[i]['problem'], polygonProblem);
-
-        similarity.push([s, cfProblems[i]['problem']['header'], cfProblems[i]['url']]);
-    }
-
-    return similarity;
-};
-
-const getMaxSimilarity = (similarity)=>{
-    
-    let mx = [-1, null, null];
-
-    for(let i=0; i<similarity.length; i++){
-      
-        if(mx[0] < similarity[i][0]){
-          
-            mx = similarity[i];
-        }
-    }
-
-    return mx;
-};
-
-getCfStatements(false);
-
-export { getCfStatements, polygonParseStatement, statementsSimilarity };
+app.listen(PORT, () => {
+    console.log(`Server is listening on port: ${PORT}`);
+});

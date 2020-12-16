@@ -1,14 +1,14 @@
-.cf-logo {
+/* .logo {
   width:400;
   height:400;
   left: auto;
   right: auto;
   pointer-events: none;
-}
+} */
 
 /* @media (prefers-reduced-motion: no-preference) {
-  .cf-logo {
-    animation: cf-logo-spin infinite 20s linear;
+  .logo {
+    animation: logo-spin infinite 20s linear;
   }
 } */
 
@@ -26,6 +26,8 @@
 body {
   background-color:#CECBCA;
   border-radius: 25px;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes cf-logo-spin {

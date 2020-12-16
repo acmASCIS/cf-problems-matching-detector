@@ -247,13 +247,40 @@ const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, wai
     return problems;
 }
 
-const polygonParseStatement = async (polyPage, page, id, timeout = 0, sep = ' ') => {
+const polygonParseStatement = async (polyPage, numOfPages, id, timeout = 0) => {
 
-    const mainUrl = `https://polygon.codeforces.com/problems?page=${page}`;
+    const findProblem = async () => {
 
-    await polyPage.goto(mainUrl, { waitUntil: 'load', timeout: timeout });
+        let problemElement = undefined;
+        let found = 0;
+        for (let i = 1; i <= numOfPages; i++) {
 
-    const problemElement = await polyPage.$x(`//tr[@problemid="${id}"]/td/a`);
+            const url = `https://polygon.codeforces.com/problems?page=${i}`;
+
+            await polyPage.goto(url, { waitUntil: 'load', timeout: timeout });
+
+            problemElement = await polyPage.$x(`//tr[@problemid="${id}"]/td/a`).then((ele) => {
+                if (ele) {
+                    problemElement = ele;
+                    found = 1;
+                }
+            }).catch(() => { });
+
+            if (found)
+                break;
+        }
+
+        return { found, problemElement };
+    };
+
+    const { found, problemElement } = await findProblem();
+
+    if (!found) {
+    
+        console.log(`Problem with id = ${id}, was not found`);
+        return;
+    }
+
     const problemUrl = await (await problemElement[0].getProperty('href')).jsonValue();
 
     console.log(problemUrl);
