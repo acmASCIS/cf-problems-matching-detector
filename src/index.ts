@@ -48,14 +48,6 @@ const getCfStatements = (headless = false) => {
 
         const similarity = statementsSimilarity(cfProblems, polygonProblem);
 
-
-        similarity.forEach((s, ele) => {
-
-            if (s > 0.8) {
-                console.log(s, ele);
-            }
-        });
-        
         const maxSimilarity = getMaxSimilarity(similarity);
 
         console.log('has-max-similarity : \n===========\n');
@@ -64,7 +56,7 @@ const getCfStatements = (headless = false) => {
         cache_info(similarity); // cache output
 
         // close
-        // browser.close();
+        browser.close();
 
 
     }).catch((err) => {

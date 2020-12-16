@@ -1,40 +1,115 @@
-.container {
-  display: flex;
-  justify-content: space-around;
-  align-self: center;
-  flex-direction: column;
-  font-family: "Times New Roman", Times, serif;
+.cf-logo {
+  width:400;
+  height:400;
+  left: auto;
+  right: auto;
+  pointer-events: none;
 }
-input{
-  width: 450px;
-  height: 20px;
-  padding-left: 10px;
-  font-size: 20px;
-}
-.addContainer{
-  flex-direction: row;   
-  align-self: center;
-}
-button {
-  width: 80px;
-  margin: 50px;
-  margin-bottom: 5px;
-  margin-right: 5px;
-  background-color:#4CAF50;
-  border-radius: 5;
-}
-.searchContainer{
+
+/* @media (prefers-reduced-motion: no-preference) {
+  .cf-logo {
+    animation: cf-logo-spin infinite 20s linear;
+  }
+} */
+
+.header {
+  background-color: #282c34;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  align-self: center;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
 }
-.theList{
+
+body {
+  background-color:#CECBCA;
+  border-radius: 25px;
+}
+
+@keyframes cf-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.form {
+  background: #fff;
+  border-radius: 25px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  position: absolute;
+  border-top: 5px solid #a9aaa9;
+}
+::-webkit-input-placeholder {
+  font-size: 1.3em;
+}
+
+
+.comma-separated-input {
+  background-color: #ebebeb;
+  overflow: hidden;
+  height: 10rem;
+  border-radius: 25px;
+}
+
+.comma-separated-input:hover {
+  border-bottom: 5px solid #3077e9;
+  height: 12em;
+  width: 380px;
+  transition: ease 0.5s;
+  border-radius: 25px;
+
+}
+
+.input {
+  background-color: #ebebeb;
+  height: 2em;
+}
+
+
+.input:hover {
+  border-bottom: 5px solid #3077e9;
+  height: 30px;
+  width: 380px;
+  transition: ease 0.5s;
+}
+
+.form-entry {
+  display: block;
+  margin: 30px;
+  min-width: 300px;
+  padding: 10px;
+  border-radius: 25px;
+  border: none;
+  transition: all 0.5s ease 0s;
+}
+
+.textLabel {
+  color: #282c34;
+  padding-left: 20px;
+  margin: auto;
+}
+
+.submit {
+  width: 150px;
+  color: white;
+  background-color: #3077e9;
+  border-radius: 25px;
   font-size: 20px;
+  align-content: center;
 }
-ul{
-  list-style: none;
-}
-ul li {
-  padding: 2px;
-  margin: 5px;
-}
+
+.submit:hover {
+  box-shadow: 15px 15px 15px 5px rgba(78, 72, 77, 0.219);
+  transform: translateY(-3px);
+  width: 300px;
+  background-color: #1456DF;
+  border-radius: 10px;
+  transform: scale(1.1);
+} 

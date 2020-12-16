@@ -154,7 +154,7 @@ const cfParseStatements = async (browser, cfPage, numOfParallelContests = 5, wai
     };
 
     const parseBody = async (jth, req) => {
- 
+
 
         await dublicatePage[jth].$x('//div[@class="problem-statement"]').then(parseContestBody.bind(null, req, jth));
 
