@@ -11,11 +11,9 @@ class Scraper {
 
     public start = async () => {
 
-        this.browser = await run(this.headless).catch((err) => {
-            console.log(err);
-        });
-        
-        (async () => {
+        run(this.headless).then(async (browser) => {
+
+            this.browser = browser;
 
             // codeforces
             const cfPage = await cfLogin(this.browser, 0);
@@ -30,7 +28,9 @@ class Scraper {
 
             // polygon
             this.polyPage = await polyLogin(this.browser, 0);
-        })();
+        }).catch((err) => {
+            console.log(err);
+        });
     };
 
     public matchPolygonProblems = async (problemsId) =>{
