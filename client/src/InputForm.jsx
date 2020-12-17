@@ -40,7 +40,7 @@ function InputForm({ onSubmit, isLoading }) {
                 />
             </div>
 
-            <div>
+            {/* <div>
                 <input
                     className="input form-entry"
                     id="matching-percentage"
@@ -48,7 +48,7 @@ function InputForm({ onSubmit, isLoading }) {
                     value={matchingPercentageThreshold}
                     onChange={createOnChangeHandler(setMatchingPercentageThreshold)}
                 />
-            </div>
+            </div> */}
             <button type="submit" className="submit form-entry" disabled={isLoading}>
                 {isLoading && (
                     <div class="spinner-border spinner-grow-sm mr-1" role="status">

@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 body {
@@ -76,6 +76,9 @@ body {
   height: 2em;
 }
 
+table, th, td {
+  border: 2px solid black;
+}
 
 .input:hover {
   border-bottom: 5px solid #3077e9;
@@ -101,7 +104,7 @@ body {
 }
 
 .submit {
-  width: 150px;
+  width: 300px;
   color: white;
   background-color: #3077e9;
   border-radius: 25px;
@@ -112,7 +115,7 @@ body {
 .submit:hover {
   box-shadow: 15px 15px 15px 5px rgba(78, 72, 77, 0.219);
   transform: translateY(-3px);
-  width: 300px;
+  width: 320px;
   background-color: #1456DF;
   border-radius: 10px;
   transform: scale(1.1);
