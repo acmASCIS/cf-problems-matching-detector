@@ -1,27 +1,28 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 import express from 'express';
 import path from 'path';
-import morgan from "morgan";
-import DelayedResponse from "http-delayed-response";
-import cors from "cors";
-
-import { Scraper } from "./scraper";
+import morgan from 'morgan';
+import cors from 'cors';
+import { Scraper } from './scraper';
 
 const headless = false;
 
 const fs = require('fs');
 const app = express();
 
+let problemsScraper = undefined;
+let ready = false;
+
 dotenv.config();
 
 fs.exists('logs.log', function (exists) {
-    if (exists) {
-        fs.unlinkSync('logs.log');
-    }
+  if (exists) {
+    fs.unlinkSync('logs.log');
+  }
 });
 
 const logFile = fs.createWriteStream(path.join(__dirname, 'logs.log'), {
-    flags: 'a',
+  flags: 'a',
 });
 
 app.use(express.json());
@@ -29,55 +30,43 @@ app.use(cors());
 app.use(morgan('dev', { stream: logFile }));
 app.use(express.static(path.join(__dirname, '../client/build')));
 
-app.post('/api/cf-problems-matching', (req, res) => {
+const startScraper = async () => {
+  if (!ready) {
+    problemsScraper = new Scraper(headless);
 
-    const { numOfPolygonPages, matchingPercentageThreshold } = req.body;
+    ready = true;
 
-    const problemsScraper = new Scraper(headless, numOfPolygonPages, matchingPercentageThreshold);
+    await problemsScraper.start();
+  }
+};
 
-    const delayed = new DelayedResponse(req, res);
+app.post('/api/cf-problems-matching', async (req, res) => {
+  const {
+    numOfPolygonPages,
+    polygonProblemsId,
+    matchingPercentageThreshold,
+  } = req.body;
 
-    delayed.wait();
+  await startScraper()
 
-    delayed.end((async () => {
+  problemsScraper.newRequest(
+    numOfPolygonPages,
+    polygonProblemsId,
+    matchingPercentageThreshold
+  );
 
-        const RETRIES = 10;
+  const maxSimilarities = await problemsScraper.matchPolygonProblems();
 
-        for (let i = 0; i < RETRIES; i += 1) {
-
-            try {
-
-                await problemsScraper.start();
-
-                return true;
-            }
-
-            catch (error) {
-
-                console.log(`ATTEMPT [${i + 1}] FAILED.`);
-                console.log(error);
-            }
-        }
-
-        return false;
-        
-    })().then((state) => {
-        if (state) {
-            res.send(problemsScraper);
-        }
-        else {
-            res.send(undefined);
-        }
-    }),
-    );
+  res.send({ ready, maxSimilarities });
+  res.end();
 });
 
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build/index.html'));
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Server is listening on port: ${PORT}`);
+  console.log(`Server is listening on port: ${PORT}`);
 });

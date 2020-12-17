@@ -1,12 +1,11 @@
 import React from 'react';
 
 const ResultsTable = ({ results }) => (
-  <table class="table">
+  <table classname="table">
     <thead>
       <tr>
         <th scope="col">#</th>
-        <th scope="col">Polygon Problem</th>
-        <th scope="col">Codeforces Problem</th>
+        <th scope="col">Polygon Problem ID</th>
         <th scope="col">Codeforces Problem URL</th>
         <th scope="col">Matching Percentage</th>
       </tr>
@@ -14,16 +13,16 @@ const ResultsTable = ({ results }) => (
     <tbody>
       {results.map((result, index) => (
         <tr>
-          <th scope="row">{index + 1}</th>
-          <td>{index}</td>
+          <td>{index + 1}</td>
           <td>{result[0]}</td>
-          <td>{result[1]}</td>
+          <td>
+            <a href={result[1]}>here</a>
+          </td>
           <td>{result[2]}</td>
-          <td><a href={result[3]}>Code</a></td>
         </tr>
       ))}
     </tbody>
   </table>
 );
 
-export {ResultsTable};
+export { ResultsTable };
