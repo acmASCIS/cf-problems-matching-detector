@@ -49,8 +49,8 @@ const polyLogin = async (browser, timeout = 0) => {
     return;
   }
 
-  await polyLoginForm[0].type(process.env.POLYGONE_USERNAME);
-  await polyLoginForm[1].type(process.env.POLYGONE_PASSWORD);
+  await polyLoginForm[0].type(process.env.POLYGON_USERNAME);
+  await polyLoginForm[1].type(process.env.POLYGON_PASSWORD);
 
   const check = await (
     await polyLoginForm[2].getProperty('checked')

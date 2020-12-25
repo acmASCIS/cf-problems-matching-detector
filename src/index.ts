@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import { Scraper } from './scraper';
 
-const headless = false;
+const headless = true;
 
 const fs = require('fs');
 const app = express();

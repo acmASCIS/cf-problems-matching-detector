@@ -4,8 +4,6 @@ import { ResultsTable } from './ResultsTable';
 import { InputForm } from './InputForm';
 import axios from 'axios';
 
-// 104501
-
 function App() {
 
   const [results, setResults] = useState(undefined);

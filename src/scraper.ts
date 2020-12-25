@@ -14,7 +14,7 @@ class Scraper {
   private browser: any | undefined = undefined;
 
   constructor(
-    private headless = false,
+    private headless = true,
     public numOfPolygonPages = undefined,
     public matchingPercentageThreshold = undefined,
     public polygonProblemsId = undefined
