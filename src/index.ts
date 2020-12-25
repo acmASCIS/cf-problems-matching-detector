@@ -1,57 +1,72 @@
-import dotenv from "dotenv";
-import { run, polyLogin, cfLogin, polygonParseStatement, cfParseStatements } from "./scraper/StatementsScraper";
+import dotenv from 'dotenv';
+import express from 'express';
+import path from 'path';
+import morgan from 'morgan';
+import cors from 'cors';
+import { Scraper } from './scraper';
+
+const headless = false;
+
+const fs = require('fs');
+const app = express();
+
+let problemsScraper = undefined;
+let ready = false;
 
 dotenv.config();
 
-/////////////////////////
-const tempRun = (htmlPath) => {
+fs.exists('logs.log', function (exists) {
+  if (exists) {
+    fs.unlinkSync('logs.log');
+  }
+});
 
-    let http = require('http');
-    let fs = require('fs');
+const logFile = fs.createWriteStream(path.join(__dirname, 'logs.log'), {
+  flags: 'a',
+});
 
-    const PORT = 8080;
+app.use(express.json());
+app.use(cors());
+app.use(morgan('dev', { stream: logFile }));
+app.use(express.static(path.join(__dirname, '../client/build')));
 
-    fs.readFile(htmlPath, function (err, html) {
+const startScraper = async () => {
+  if (!ready) {
+    problemsScraper = new Scraper(headless);
 
-        if (err) throw err;
+    ready = true;
 
-        http.createServer(function (request, response) {
-            response.writeHeader(200, { "Content-Type": "text/html" });
-            response.write(html);
-            response.end();
-        }).listen(PORT);
-    });
-
-    const url = `http://localhost:${PORT}/`;
-
-    return url;
+    await problemsScraper.start();
+  }
 };
 
-const testProblemUrl = tempRun('test_pages/Statements-Polygon.html');
-/////////////////////////
+app.post('/api/cf-problems-matching', async (req, res) => {
+  const {
+    numOfPolygonPages,
+    polygonProblemsId,
+    matchingPercentageThreshold,
+  } = req.body;
 
-run().then(async (browser) => {
+  await startScraper()
 
-    // codeforces
-    const cfPage = await cfLogin(browser);
-    const cfProblems = await cfParseStatements(cfPage, 0, ' ');
+  problemsScraper.newRequest(
+    numOfPolygonPages,
+    polygonProblemsId,
+    matchingPercentageThreshold
+  );
 
-    console.log(cfProblems.length);
-    console.log(cfProblems[0]);
+  const maxSimilarities = await problemsScraper.matchPolygonProblems();
 
+  res.send({ ready, maxSimilarities });
+  res.end();
+});
 
-    // polygon
-    const polyPage = await polyLogin(browser);
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/build/index.html'));
+});
 
-    const url = testProblemUrl;
-    const polygonProblem = await polygonParseStatement(polyPage, url, 0, ' ');
+const PORT = process.env.PORT || 3000;
 
-    console.log(polygonProblem);
-    console.log(polygonProblem);
-
-    // close
-    browser.close();
-
-}).catch((err: any) => {
-    console.log(err);
+app.listen(PORT, () => {
+  console.log(`Server is listening on port: ${PORT}`);
 });

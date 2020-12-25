@@ -1,0 +1,64 @@
+import React, { useState } from 'react';
+import './App.css';
+import { ResultsTable } from './ResultsTable';
+import { InputForm } from './InputForm';
+import axios from 'axios';
+
+// 104501
+
+function App() {
+
+  const [results, setResults] = useState(undefined);
+  const [isLoading, setIsLoading] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  const onSubmit = async (data: any) => {
+    setIsLoading(true);
+
+    const numOfPolygonPages: number = data.numOfPolygonPages;
+    const polygonProblemsId: string = data.problemsId;
+    const matchingPercentageThreshold: number =
+      data.matchingPercentageThreshold;
+
+    const url = `http://localhost:${process.env.REACT_APP_PORT}/api/cf-problems-matching`;
+
+    try {
+      const res = await axios.post(
+        url,
+        { numOfPolygonPages, polygonProblemsId, matchingPercentageThreshold },
+        { timeout: 0 }
+      );
+
+      console.log(res);
+
+      const { ready, maxSimilarities } = res.data;
+
+      console.log(ready);
+      console.log(maxSimilarities);
+
+      setResults(maxSimilarities);
+      setReady(ready);
+
+      setIsLoading(false || !ready);
+    } catch (error) {
+      alert('An error occurred. \n' + error);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="App">
+      <header className="header">
+        <body>
+          {results === undefined ? (
+            <InputForm isLoading={isLoading} onSubmit={onSubmit} />
+          ) : (
+            <ResultsTable results={results} />
+          )}
+        </body>
+      </header>
+    </div>
+  );
+}
+
+export { App };
