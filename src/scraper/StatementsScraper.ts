@@ -30,7 +30,7 @@ const strFormat = (str: string) => {
 const run = async (headless: boolean = false) => {
   const browser = await puppeteer.launch({
     headless: headless,
-    executablePath: process.env.Chrome,
+    // executablePath: process.env.Chrome,
   });
 
   return browser;

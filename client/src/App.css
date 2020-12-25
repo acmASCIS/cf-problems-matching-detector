@@ -50,7 +50,7 @@ body {
 .comma-separated-input:hover {
   border-bottom: 5px solid #3077e9;
   height: 12em;
-  width: 380px;
+  width: 300px;
   transition: ease 0.5s;
   border-radius: 25px;
 
@@ -69,7 +69,7 @@ table, th, td {
 .input:hover {
   border-bottom: 5px solid #3077e9;
   height: 30px;
-  width: 380px;
+  width: 300px;
   transition: ease 0.5s;
 }
 
@@ -101,7 +101,7 @@ table, th, td {
 .submit:hover {
   box-shadow: 15px 15px 15px 5px rgba(78, 72, 77, 0.219);
   transform: translateY(-3px);
-  width: 320px;
+  width: 300px;
   background-color: #1456DF;
   border-radius: 10px;
   transform: scale(1.1);
