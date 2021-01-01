@@ -18,7 +18,7 @@ function App() {
     const matchingPercentageThreshold: number =
       data.matchingPercentageThreshold;
 
-    const url = `http://localhost:${process.env.REACT_APP_PORT}/api/cf-problems-matching`;
+    const url = `${process.env.REACT_APP_API_URL}/api/cf-problems-matching`;
 
     try {
       const res = await axios.post(
