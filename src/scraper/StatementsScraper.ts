@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer';
 import xtree from 'xpath';
 import { DOMParser } from 'xmldom';
-import { url } from 'inspector';
 
 // login url
 const polyLoginUrl = 'https://polygon.codeforces.com/login';
@@ -27,10 +26,9 @@ const strFormat = (str: string) => {
     .toLowerCase();
 };
 
-const run = async (headless: boolean = false) => {
+const run = async () => {
   const browser = await puppeteer.launch({
-    headless: headless,
-    // executablePath: process.env.Chrome,
+    headless: true,
   });
 
   return browser;
@@ -126,11 +124,13 @@ const cfParseStatements = async (
 
   const enterGroup = await cfPage.$x('//a[contains(., "Enter »")]');
 
+  console.log('[GETTING PROBLEMS URL START]');
   const problemsUrl = await Promise.all(
     enterGroup.map(async (a) => {
       return (await (await a.getProperty('href')).jsonValue()) + '/problems';
     })
   );
+  console.log('[GETTING PROBLEMS URL END]');
 
   console.log('No. of contests :', problemsUrl.length);
 
@@ -269,19 +269,14 @@ const polygonParseStatement = async (polyPage, numOfPages, id, timeout = 0) => {
 
       try {
         await polyPage.goto(url, { waitUntil: 'load', timeout: timeout });
+        problemElement = await polyPage.$x(`//tr[@problemid="${id}"]/td/a`);
+
+        if (problemElement.length) {
+          found = 1;
+          break;
+        }
       } catch (err) {
         console.log(`Page = ${i} was not found`);
-      }
-
-      try {
-        problemElement = await polyPage.$x(`//tr[@problemid="${id}"]/td/a`);
-      } catch {
-        console.log(`Page = ${i}`);
-      }
-
-      if (problemElement.length) {
-        found = 1;
-        break;
       }
     }
 
@@ -299,7 +294,7 @@ const polygonParseStatement = async (polyPage, numOfPages, id, timeout = 0) => {
     await problemElement[0].getProperty('href')
   ).jsonValue();
 
-  console.log(problemUrl);
+  console.log('[PROBLEM URL]', problemUrl);
 
   await polyPage.goto(problemUrl, { waitUntil: 'load', timeout: timeout });
 
@@ -310,7 +305,7 @@ const polygonParseStatement = async (polyPage, numOfPages, id, timeout = 0) => {
     await statementElement[0].getProperty('href')
   ).jsonValue();
 
-  console.log(statementUrl);
+  console.log('[STATEMENT URL]', statementUrl);
 
   await polyPage.goto(statementUrl, { waitUntil: 'load', timeout: timeout });
 

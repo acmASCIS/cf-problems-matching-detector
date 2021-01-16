@@ -5,8 +5,6 @@ import morgan from 'morgan';
 import cors from 'cors';
 import { Scraper } from './scraper';
 
-const headless = true;
-
 const fs = require('fs');
 const app = express();
 
@@ -32,7 +30,7 @@ app.use(express.static(path.join(__dirname, '../client/build')));
 
 const startScraper = async () => {
   if (!ready) {
-    problemsScraper = new Scraper(headless);
+    problemsScraper = new Scraper();
 
     ready = true;
 
@@ -41,6 +39,8 @@ const startScraper = async () => {
 };
 
 app.post('/api/cf-problems-matching', async (req, res) => {
+  req.setTimeout(1000 * 60 * 10); // 10 Minutes
+
   const {
     numOfPolygonPages,
     polygonProblemsId,

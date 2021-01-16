@@ -4,7 +4,6 @@ import {
   cfLogin,
   cfParseStatements,
   polygonParseStatement,
-  delay,
 } from './scraper/StatementsScraper';
 import check from 'string-similarity';
 
@@ -14,18 +13,18 @@ class Scraper {
   private browser: any | undefined = undefined;
 
   constructor(
-    private headless = true,
-    public numOfPolygonPages = undefined,
-    public matchingPercentageThreshold = undefined,
-    public polygonProblemsId = undefined
+    public numOfPolygonPages?: number,
+    public matchingPercentageThreshold?: number,
+    public polygonProblemsId?:number
   ) {}
 
   public start = async () => {
     try {
-      this.browser = await run(this.headless);
+      this.browser = await run();
 
-      // codeforces
+      console.log('[CF LOGIN START]');
       const cfPage = await cfLogin(this.browser, 0);
+      console.log('[CF LOGIN END]');
 
       const numOfParallelContests = 10;
       const waitingStep = 100;
@@ -41,15 +40,16 @@ class Scraper {
         ' '
       );
 
-      delay(100);
-
+      console.log('[POLYGON LOGIN START]');
       // polygon
       this.polyPage = await polyLogin(this.browser, 0);
 
-      return 1;
+      console.log('[POLYGON LOGIN END]');
+
+      return true;
     } catch (err) {
       console.log(err);
-      return 0;
+      throw new Error('Failed to start the scrapper');
     }
   };
 
