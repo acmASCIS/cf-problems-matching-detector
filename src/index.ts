@@ -4,9 +4,12 @@ import path from 'path';
 import morgan from 'morgan';
 import cors from 'cors';
 import { Scraper } from './scraper';
+import basicAuth from 'express-basic-auth';
 
 const fs = require('fs');
 const app = express();
+
+
 
 let problemsScraper = undefined;
 let ready = false;
@@ -26,7 +29,15 @@ const logFile = fs.createWriteStream(path.join(__dirname, 'logs.log'), {
 app.use(express.json());
 app.use(cors());
 app.use(morgan('dev', { stream: logFile }));
+app.use(
+  basicAuth({
+    users: { [process.env.BASIC_AUTH_USERNAME as string]: process.env.BASIC_AUTH_PASSWORD as string },
+    challenge: true,
+  }),
+);
+
 app.use(express.static(path.join(__dirname, '../client/build')));
+
 
 const startScraper = async () => {
   if (!ready) {
@@ -58,6 +69,16 @@ app.post('/api/cf-problems-matching', async (req, res) => {
   const maxSimilarities = await problemsScraper.matchPolygonProblems();
 
   res.send({ ready, maxSimilarities });
+  res.end();
+});
+
+
+app.post('/api/force-scrap', async (req, res) => {
+  req.setTimeout(1000 * 60 * 10); // 10 Minutes
+  ready = false;
+  await startScraper();
+
+  res.send({ ready });
   res.end();
 });
 
