@@ -10,6 +10,26 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [ready, setReady] = useState(false);
 
+
+  const forceScrap = async () => {
+    setIsLoading(true);
+    const url = `${process.env.REACT_APP_API_URL}/api/force-scrap`;
+    try {
+      const res = await axios.post(url);
+
+      const { ready } = res.data;
+      setReady(ready);
+
+      setIsLoading(false);
+      alert('All is Ready Now');
+
+    } catch (error) {
+      alert('An error occurred. \n' + error);
+      setIsLoading(false);
+    }
+
+  }
+
   const onSubmit = async (data: any) => {
     setIsLoading(true);
 
@@ -44,15 +64,16 @@ function App() {
     }
   };
 
+
   return (
     <div className="App">
       <header className="header">
         <body>
-          {results === undefined ? (
-            <InputForm isLoading={isLoading} onSubmit={onSubmit} />
-          ) : (
-            <ResultsTable results={results} />
-          )}
+          {
+              (results === undefined ?
+                <InputForm isLoading={isLoading} onSubmit={onSubmit} forceScrap={forceScrap} />
+                : <ResultsTable results={results} />)
+          }
         </body>
       </header>
     </div>
